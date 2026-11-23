@@ -1,6 +1,34 @@
 # 2R robot kol: ileri ve ters kinematik
 
-Düzlemsel iki dönel eklemli (2R) robot kolunun ileri ve ters kinematiği. Python kodu, matplotlib çizimi ve tarayıcıda açılan iki etkileşimli sayfa içerir.
+Düzlemsel iki dönel eklemli (2R) robot kolunun ileri ve ters kinematiği, **3 boyutlu etkileşimli bir sahne** ile. Kol masanın üstünde duran gerçek bir nesne gibi gösterilir, açılar masaya çizilmiş renkli yaylarla işaretlenir. Python kodu, matplotlib çizimi ve adım adım anlatım sayfası da var.
+
+## 3D etkileşimli sahne
+
+**Dosya: [`web/kol3d.html`](web/kol3d.html)**. Dosyayı indirip tarayıcıda aç (GitHub'da tıklayınca çalışmaz, sadece kod görünür; three.js internetten yüklendiği için bağlantı gerekir).
+
+**Sahnede ne var**
+- Mavi kol 1. kol, mor kol 2. kol. Bağlantılar silindir olarak çizilir, kol masanın üstünde durur.
+- **Silik kol** aynı hedefin öbür ters kinematik çözümüdür. Dalı değiştirince kol dirseğini çevirerek öbür çözüme geçer.
+- **Kırmızı iğne** hedeftir. Kolun ucu iğnenin tepesiyle üst üste gelince hedefe ulaşılmış olur.
+- **Yeşil halka** ulaşılabilir alandır: 0.1 m ≤ r ≤ 0.7 m.
+
+**Açı yayları** (alttaki düğmelerle tek tek açılıp kapatılır)
+
+| Renk | Açı | Nerede ölçülür |
+|---|---|---|
+| Mavi | θ₁ | x ekseni ile 1. kol arası |
+| Mor | θ₂ | 1. kolun uzantısı (gri kesikli) ile 2. kol arası |
+| Magenta | φ | x ekseni ile tabandan hedefe giden çizgi arası |
+| Kahve | β | 1. kol ile tabandan hedefe giden çizgi arası |
+
+**Neler yapabilirsin**
+- **Sahneyi çevir:** boş yere basıp sürükle. Kamera düğmeleri: 3D, Üstten, Yandan. Fare tekerleği ile yakınlaştır.
+- **Hedefi sürükle:** kırmızı iğneyi taşı. Altındaki hesap kartı c₂, θ₂, φ, β ve θ₁ değerlerini canlı günceller.
+- **Dal seç:** 1. dal (θ₂ pozitif) ve 2. dal (θ₂ negatif) arasında geçiş yap.
+- **Hazır hedefler:** "c şıkkı" (0.4, 0.3) ve "d şıkkı" (0.8, 0) düğmeleri. d şıkkında hedef halkanın dışına çıkar, kol kırmızıya döner ve kart `|c₂| > 1` yazar.
+- **İleri kinematik:** "Açı ver" sekmesinde θ₁ ve θ₂ kaydırıcılarıyla kolu elle çevir. θ₂'nin 1. kola göre ölçüldüğünü, θ₁ değişince 2. kolun da onunla döndüğünü gör.
+
+**İki çözüm yan yana (matplotlib çıktısı)**
 
 ![İki ters kinematik çözümü](kol.png)
 
@@ -61,8 +89,8 @@ s₂ = ±√(1−c₂²) = ±1                         → θ₂ = +90° veya �
 |---|---|
 | `robot_kol.py` | `ileri(t1, t2)` ve `ters(x, y)` fonksiyonları, iki hedefle deneme |
 | `robot_kol_ciz.py` | İki ters kinematik çözümünü matplotlib ile çizer, `kol.png` kaydeder |
-| `web/adim_adim.html` | c şıkkını 9 adımda gösteren etkileşimli sayfa |
-| `web/kol3d.html` | Kolu masanın üstünde 3 boyutlu gösteren sayfa (hedefi sürüklenebilir, açı yayları) |
+| `web/kol3d.html` | **3D etkileşimli sahne:** döndürülebilir kamera, sürüklenebilir hedef, açı yayları, iki çözüm |
+| `web/adim_adim.html` | c şıkkını 9 adımda gösteren 2D etkileşimli anlatım sayfası |
 
 ## Çalıştırma
 
@@ -72,4 +100,4 @@ python robot_kol.py        # iki hedef için çözümleri yazdırır
 python robot_kol_ciz.py    # çizimi açar
 ```
 
-`web/` altındaki sayfaları tarayıcıda açman yeterli (3D sayfa three.js'i internetten yükler).
+`web/kol3d.html` ve `web/adim_adim.html` dosyalarını tarayıcıda açman yeterli (3D sayfa three.js'i internetten yükler).
