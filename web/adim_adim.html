@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2R kol: c şıkkı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: sakin, adım adım ders notu; kitaptaki sırayı izler
+   IDEA: mühendislik çizim kağıdı üstünde ölçülendirilmiş kol çizimi
+   PICTURE: büyük kol çizimi, her adımda yalnızca o adımın açısı renkli
+   COLOUR and TYPE: kağıt beyazı, mürekkep, magenta φ, kahve β, mavi θ₁, mor θ₂; Overpass
+   LAYOUT: başlık, çizim, adım düğmeleri, adım kartı, sonda açı tablosu */
+:root{color-scheme:light dark;--bg:light-dark(#fbfbf2,#0d1c24);--ink:light-dark(#13242e,#e8eef0);--mute:light-dark(#5a6a72,#9fb0b8);--line:light-dark(#d9dccf,#24414f);--card:light-dark(#ffffff,#122833);--grid:light-dark(#eef0e4,#112631);
+--phi:light-dark(#d6127e,#ff5fb0);--beta:light-dark(#a8551b,#e59a5c);--t1:light-dark(#1f6f9f,#6cc0f0);--t2:light-dark(#6b4fbf,#b39cff);--ok:light-dark(#11803f,#5fd38d);--bad:light-dark(#c0262d,#ff7a7f);--sea:light-dark(#bfe3ee,#173c4c)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 Overpass,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:760px;margin:0 auto;padding:clamp(20px,4vw,44px) max(4vw,14px) 48px}
+h1{font-size:clamp(28px,6vw,40px);line-height:1.08;font-weight:800;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--mute);margin:0 0 18px}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px}
+.fig svg{display:block;width:100%;height:auto}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 10px}
+button{font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:focus-visible{outline:3px solid var(--t1);outline-offset:2px}
+button.on{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.steps{display:flex;gap:6px;overflow-x:auto;padding:2px 0 8px;scroll-snap-type:x mandatory}
+.steps button{flex:none;min-width:44px;padding:8px 12px;scroll-snap-align:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px clamp(14px,3vw,24px);margin-top:6px}
+.card h2{font-size:22px;line-height:1.2;margin:0 0 10px;font-weight:800}
+.card p{margin:0 0 10px}
+.eq{font-size:17px;background:var(--bg);border-radius:10px;padding:10px 14px;margin:10px 0;line-height:1.9;overflow-x:auto}
+.eq div{white-space:nowrap}
+.res{font-weight:800}
+.phi{color:var(--phi)}.beta{color:var(--beta)}.t1{color:var(--t1)}.t2{color:var(--t2)}.okc{color:var(--ok)}.badc{color:var(--bad)}
+.nav{display:flex;justify-content:space-between;gap:8px;margin-top:14px}
+h3{font-size:20px;margin:30px 0 10px;font-weight:800}
+table{width:100%;border-collapse:collapse;font-size:15px;background:var(--card);border-radius:12px;overflow:hidden}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;color:var(--mute);font-size:14px}
+td.n{text-align:right;white-space:nowrap}
+.small{font-size:14px;color:var(--mute)}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<div class="wrap">
+<h1>2R kol, c şıkkı: açılar nerede, sayılar nereden geliyor?</h1>
+<p class="lead">L₁ = 0.4 m, L₂ = 0.3 m, hedef p = (0.4, 0.3) m. Kitaptaki çözüm sırasıyla, her adımda o adımın açısı çizimde renkli.</p>
+
+<div class="fig"><svg id="svg" viewBox="0 0 400 340" role="img" aria-label="İki eklemli robot kolu ve açıları"></svg></div>
+
+<div class="bar" id="branches">
+<button id="br1" class="on" onclick="">1. dal: θ₂ = +90°</button>
+<button id="br2" onclick="">2. dal: θ₂ = −90°</button>
+</div>
+<div class="steps" id="steps" role="tablist" aria-label="Adımlar"></div>
+
+<div class="card" id="card" aria-live="polite"></div>
+<div class="nav"><button id="prev">← Önceki</button><button id="next">Sonraki →</button></div>
+
+<h3>Açıların hepsi bir arada</h3>
+<table class="stack">
+<thead><tr><th>Açı</th><th>Nerede</th><th>Neyle neyin arasında</th><th>1. dal</th><th>2. dal</th></tr></thead>
+<tbody>
+<tr><td class="phi"><b>φ</b> hedefin yön açısı</td><td>tabanda</td><td>x ekseni → tabandan hedefe çizgi</td><td class="n">36.87°</td><td class="n">36.87°</td></tr>
+<tr><td class="t1"><b>θ₁</b></td><td>tabanda</td><td>x ekseni → 1. kol</td><td class="n">0°</td><td class="n">73.74°</td></tr>
+<tr><td class="beta"><b>β</b> ilk kol ile hedef arası</td><td>tabanda</td><td>1. kol → tabandan hedefe çizgi</td><td class="n">36.87°</td><td class="n">−36.87°</td></tr>
+<tr><td class="t2"><b>θ₂</b></td><td>dirsekte</td><td>1. kolun uzantısı → 2. kol</td><td class="n">+90°</td><td class="n">−90°</td></tr>
+</tbody></table>
+<p class="small">Saat yönünün tersine dönüş artı, saat yönünde dönüş eksi sayılır. Kitapta 36.8699° ve 73.7398° yazıyor; burada iki basamağa yuvarlandı.</p>
+</div>
+
+<script>
+{
+const S=380,O={x:90,y:288},L1=.4,L2=.3,d=Math.PI/180;
+const f=v=>(Math.abs(v)<5e-4?0:v).toFixed(2);
+const fm=v=>{const s=f(v);return s.startsWith('-')?'−'+s.slice(1):s};
+const fx=v=>{const s=(Math.abs(v)<5e-5?0:v).toFixed(3);return s.startsWith('-')?'−'+s.slice(1):s};
+let br=1,st=0;
+function B(s){const c2=0,s2=s,phi=Math.atan2(.3,.4),beta=Math.atan2(L2*s2,L1+L2*c2),t1=phi-beta,t2=Math.atan2(s2,c2);return{s2,c2,phi,beta,t1,t2}}
+const P=(a,r,o=O)=>[o.x+r*Math.cos(a),o.y-r*Math.sin(a)];
+const M=(x,y)=>[O.x+x*S,O.y-y*S];
+function arc(o,R,a0,a1,col,w=2){if(Math.abs(a1-a0)<1e-3)return'';const[x0,y0]=P(a0,R,o),[x1,y1]=P(a1,R,o),dl=a1-a0;return`<path d="M${x0} ${y0} A${R} ${R} 0 ${Math.abs(dl)>Math.PI?1:0} ${dl>0?0:1} ${x1} ${y1}" fill="none" stroke="${col}" stroke-width="${w}"/>`}
+function lab(o,R,a,t,col,w=800){const[x,y]=P(a,R,o);return`<text x="${x}" y="${y}" fill="${col}" font-size="16" font-weight="${w}" text-anchor="middle" dominant-baseline="central">${t}</text>`}
+const T=(x,y,t,o='')=>`<text x="${x}" y="${y}" fill="var(--ink)" font-size="13" ${o}>${t}</text>`;
+function arm(b,col1,col2,op=1,dash=''){const e=P(b.t1,L1*S),h=P(b.t1+b.t2,L2*S,{x:e[0],y:e[1]});return`<g opacity="${op}"><line x1="${O.x}" y1="${O.y}" x2="${e[0]}" y2="${e[1]}" stroke="${col1}" stroke-width="7" stroke-linecap="round" ${dash}/><line x1="${e[0]}" y1="${e[1]}" x2="${h[0]}" y2="${h[1]}" stroke="${col2}" stroke-width="6" stroke-linecap="round" ${dash}/><circle cx="${e[0]}" cy="${e[1]}" r="5" fill="var(--card)" stroke="var(--ink)" stroke-width="1.5"/></g>`}
+
+const steps=[
+{k:'Hedef',show:{ring:1,dist:1,armFaint:1},h:b=>`<h2>1. Hedef nerede, ne kadar uzakta?</h2>
+<p>Soru hedefi taban çerçevesinde veriyor: taban (0, 0) noktasında, hedef 0.4 m sağda ve 0.3 m yukarıda.</p>
+<p>Tabandan hedefe olan düz uzaklık bir dik üçgenin hipotenüsü, Pisagor ile:</p>
+<div class="eq"><div>r = √(x² + y²) = √(0.4² + 0.3²)</div><div>r = √(0.16 + 0.09) = √0.25 = <span class="res">0.5 m</span></div></div>
+<p>Kolun ulaşabildiği halka 0.1 ≤ r ≤ 0.7 (çizimdeki iki kesikli çember). 0.5 bu aralıkta, yani hedefe ulaşılabilir.</p>`},
+{k:'c₂',show:{tri:1,arm:1},h:b=>`<h2>2. c₂ = cos θ₂: dirsek ne kadar bükülmeli?</h2>
+<p>Kitap, ileri kinematikteki x² + y² hesaplanınca terimlerin birleştiğini söylüyor:</p>
+<div class="eq"><div>x² + y² = L₁² + L₂² + 2L₁L₂·cos θ₂</div></div>
+<p>Sol taraf hedefin uzaklığının karesi. Sağ tarafta sadece θ₂ var: uzaklığı yalnızca dirsek belirler. Denklemi c₂ için çöz:</p>
+<div class="eq"><div>c₂ = (x² + y² − L₁² − L₂²) / (2L₁L₂)</div><div>c₂ = (0.16 + 0.09 − 0.16 − 0.09) / (2 · 0.4 · 0.3)</div><div>c₂ = 0 / 0.24 = <span class="res">0</span></div></div>
+<p>Çizimdeki üçgenin kenarları 0.4, 0.3 ve 0.5. Bu bir 3-4-5 dik üçgeni, dik açı dirsekte.</p>`},
+{k:'s₂',show:{arm:1,ghost:1,t2:1},h:b=>`<h2>3. s₂ = sin θ₂: iki dal</h2>
+<p>sin² + cos² = 1 olduğundan:</p>
+<div class="eq"><div>s₂ = ±√(1 − c₂²) = ±√(1 − 0) = <span class="res">±1</span></div></div>
+<p>Karekökün artı ve eksi iki değeri var, bu yüzden iki çözüm çıkıyor:</p>
+<div class="eq"><div>s₂ = +1 → <span class="t2 res">θ₂ = +90°</span> (1. dal)</div><div>s₂ = −1 → <span class="t2 res">θ₂ = −90°</span> (2. dal)</div></div>
+<p><span class="t2">θ₂</span> dirsekte ölçülür: 1. kolun uzantısından (gri kesikli) 2. kola kadar. Silik çizilen kol öbür dal. Yukarıdaki düğmelerle dalı değiştir.</p>`},
+{k:'φ',show:{arm:1,tline:1,phi:1},h:b=>`<h2>4. φ: hedefin yön açısı</h2>
+<p><span class="phi">φ</span> tabanda: x ekseni ile tabandan hedefe giden çizgi (magenta kesikli) arasındaki açı.</p>
+<div class="eq"><div>φ = atan2(y, x) = atan2(0.3, 0.4)</div><div>tan φ = 0.3 / 0.4 = 0.75 → <span class="phi res">φ = 36.87°</span></div></div>
+<p>φ dala bağlı değil, sadece hedefe bağlı. İki dalda da aynı.</p>`},
+{k:'β',show:{arm:1,tline:1,beta:1},h:b=>`<h2>5. β: ilk kol ile hedef arasındaki açı</h2>
+<p><span class="beta">β</span> de tabanda: 1. kol ile tabandan hedefe giden çizgi arasındaki açı.</p>
+<p>2. kolu iki parçaya ayır. 1. kol doğrultusundaki payı L₂c₂, 1. kola dik payı L₂s₂. Tabandan bakınca hedef, 1. kol doğrultusunda L₁ + L₂c₂ kadar ileride ve L₂s₂ kadar yanda:</p>
+<div class="eq"><div>β = atan2(L₂s₂, L₁ + L₂c₂)</div><div>β = atan2(0.3 · (${b.s2>0?'+1':'−1'}), 0.4 + 0.3 · 0)</div><div>β = atan2(${b.s2>0?'0.3':'−0.3'}, 0.4) = <span class="beta res">${fm(b.beta/d)}°</span></div></div>
+<p>${b.s2>0?'1. dalda 1. kol hedef çizgisinin altında, koldan hedef çizgisine saat yönünün tersine dönülüyor: β artı.':'2. dalda 1. kol hedef çizgisinin üstünde, koldan hedef çizgisine saat yönünde (aşağı) dönülüyor: β eksi.'}</p>`},
+{k:'θ₁',show:{arm:1,tline:1,phi:1,beta:1,t1:1},h:b=>`<h2>6. θ₁ = φ − β</h2>
+<p>Tabanda üç çizgi var: x ekseni, 1. kol ve hedef çizgisi. x ekseninden hedef çizgisine iki yoldan gidilir: doğrudan (<span class="phi">φ</span>) ya da önce 1. kola (<span class="t1">θ₁</span>), oradan hedef çizgisine (<span class="beta">β</span>):</p>
+<div class="eq"><div><span class="phi">φ</span> = <span class="t1">θ₁</span> + <span class="beta">β</span> → <span class="t1">θ₁</span> = <span class="phi">φ</span> − <span class="beta">β</span></div><div>θ₁ = ${fm(b.phi/d)}° − (${fm(b.beta/d)}°) = <span class="t1 res">${fm(b.t1/d)}°</span></div></div>
+<div class="eq"><div>Sonuç: <span class="res">(θ₁, θ₂) = (${fm(b.t1/d)}°, ${b.s2>0?'90°':'−90°'})</span></div></div>
+<p>${b.s2>0?'θ₁ = 0: 1. kol x ekseninin üstünde yatıyor, bu yüzden β ile φ aynı açı.':'Kitabın dediği gibi bu, dirseğin öbür geometrik yerleşimi.'}</p>`},
+{k:'Doğrula',show:{arm:1,t1:1,t2:1,check:1},h:b=>{const t1=b.t1,t12=b.t1+b.t2,x1=L1*Math.cos(t1),x2=L2*Math.cos(t12),y1=L1*Math.sin(t1),y2=L2*Math.sin(t12);return`<h2>7. Doğrulama: ileri kinematik</h2>
+<p>Açıları ileri kinematiğe koy. 2. kolun açısı θ₂ değil, toplam açı θ₁ + θ₂ = ${fm(t12/d)}°.</p>
+<div class="eq"><div>x = L₁cos θ₁ + L₂cos(θ₁ + θ₂)</div><div>x = 0.4·cos ${fm(t1/d)}° + 0.3·cos ${fm(t12/d)}° = ${fx(x1)} + ${fx(x2)} = <span class="okc res">${fx(x1+x2)}</span></div></div>
+<div class="eq"><div>y = L₁sin θ₁ + L₂sin(θ₁ + θ₂)</div><div>y = 0.4·sin ${fm(t1/d)}° + 0.3·sin ${fm(t12/d)}° = ${fx(y1)} + (${fx(y2)}) = <span class="okc res">${fx(y1+y2)}</span></div></div>
+<p>Sonuç (0.4, 0.3): hedef sağlanmış.</p>`}},
+{k:'d şıkkı',show:{dmode:1},h:b=>`<h2>8. Erişilemeyen hedef: (0.8, 0)</h2>
+<p>Uzaklık √(0.8² + 0²) = 0.8 m. Kol tamamen açıkken bile en fazla 0.7 m'ye uzanıyor (çizimde dış çember).</p>
+<p>Aynı formülü yine de uygularsan:</p>
+<div class="eq"><div>c₂ = (0.64 − 0.16 − 0.09) / 0.24 = 0.39 / 0.24 = <span class="badc res">1.625</span></div></div>
+<p>Kosinüs her zaman −1 ile 1 arasında. 1.625 olamaz, yani θ₂ yok ve ters kinematik çözümü yok. Kural: <b>|c₂| > 1 ise hedefe ulaşılamaz.</b></p>`},
+{k:'Sık hata',show:{arm:1,wrong:1},h:b=>{const t1=b.t1,t2=b.t2;const wx=L1*Math.cos(t1)+L2*Math.cos(t2),wy=L1*Math.sin(t1)+L2*Math.sin(t2);return`<h2>9. Sık hata</h2>
+<p><b>1) Toplam açıyı unutmak.</b> θ₂ 1. kola göre ölçüldüğü için 2. kolun katkısı L₂cos(θ₁ + θ₂). Yanlışlıkla L₂cos θ₂ yazarsan bu dalda:</p>
+<div class="eq"><div>x = 0.4·cos ${fm(t1/d)}° + 0.3·cos ${fm(t2/d)}° = <span class="badc res">${fx(wx)}</span></div><div>y = 0.4·sin ${fm(t1/d)}° + 0.3·sin ${fm(t2/d)}° = <span class="badc res">${fx(wy)}</span></div></div>
+<p>${Math.abs(wx-.4)<1e-3&&Math.abs(wy-.3)<1e-3?'1. dalda θ₁ = 0 olduğu için hata tesadüfen görünmüyor. 2. dala geçip bak.':'Çizimdeki kırmızı nokta bu yanlış sonuç; hedeften uzakta.'}</p>
+<p><b>2) atan yerine atan2.</b> atan(y/x) sadece oranı görür: (0.4, 0.3) ve (−0.4, −0.3) ikisi de 0.75 verir, ama zıt yönlerdeler. atan2(y, x) işaretlere ayrı ayrı bakar ve doğru bölgeyi seçer.</p>`}}
+];
+
+const svg=document.getElementById('svg'),card=document.getElementById('card'),stepsEl=document.getElementById('steps');
+stepsEl.innerHTML=steps.map((s,i)=>`<button role="tab" data-i="${i}">${i+1}. ${s.k}</button>`).join('');
+
+function draw(){
+const s=steps[st].show,b=B(br),ob=B(-br);
+let g='';
+g+=`<line x1="10" y1="${O.y}" x2="395" y2="${O.y}" stroke="var(--mute)" stroke-width="1"/>`+T(392,O.y+18,'x ekseni','text-anchor="end" fill="var(--mute)"');
+if(s.dmode){
+g+=`<circle cx="${O.x}" cy="${O.y}" r="${.7*S}" fill="var(--sea)" fill-opacity=".35" stroke="var(--t1)" stroke-dasharray="6 5"/>`;
+g+=`<circle cx="${O.x}" cy="${O.y}" r="${.1*S}" fill="var(--card)" stroke="var(--t1)" stroke-dasharray="4 4"/>`;
+const[ex,ey]=M(.4,0),[hx,hy]=M(.7,0),[tx,ty]=M(.8,0);
+g+=`<line x1="${O.x}" y1="${O.y}" x2="${ex}" y2="${ey}" stroke="var(--t1)" stroke-width="7" stroke-linecap="round"/><line x1="${ex}" y1="${ey}" x2="${hx}" y2="${hy}" stroke="var(--t2)" stroke-width="6" stroke-linecap="round"/>`;
+g+=`<line x1="${tx-7}" y1="${ty-7}" x2="${tx+7}" y2="${ty+7}" stroke="var(--bad)" stroke-width="2.5"/><line x1="${tx+7}" y1="${ty-7}" x2="${tx-7}" y2="${ty+7}" stroke="var(--bad)" stroke-width="2.5"/>`;
+g+=T(hx-6,hy-14,'en fazla 0.7 m','text-anchor="end"')+T(tx-4,ty-16,'(0.8, 0)','text-anchor="end" fill="var(--bad)" font-weight="800"');
+g+=`<circle cx="${O.x}" cy="${O.y}" r="6" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>`+T(O.x,O.y+20,'Taban','text-anchor="middle"');
+svg.innerHTML=g;return}
+if(s.ring){g+=`<circle cx="${O.x}" cy="${O.y}" r="${.7*S}" fill="var(--sea)" fill-opacity=".3" stroke="var(--t1)" stroke-dasharray="6 5"/><circle cx="${O.x}" cy="${O.y}" r="${.1*S}" fill="var(--card)" stroke="var(--t1)" stroke-dasharray="4 4"/>`+T(O.x+.7*S*Math.cos(1.1)+6,O.y-.7*S*Math.sin(1.1),'0.7 m')}
+const[tx,ty]=M(.4,.3);
+if(s.tline||s.dist){g+=`<line x1="${O.x}" y1="${O.y}" x2="${tx}" y2="${ty}" stroke="var(--phi)" stroke-width="1.6" stroke-dasharray="7 5"/>`}
+if(s.dist){g+=lab(O,.25*S,b.phi+.12,'0.5 m','var(--phi)',600);
+g+=`<line x1="${O.x}" y1="${O.y+30}" x2="${tx}" y2="${O.y+30}" stroke="var(--mute)"/><line x1="${tx+28}" y1="${O.y}" x2="${tx+28}" y2="${ty}" stroke="var(--mute)"/>`+T((O.x+tx)/2,O.y+46,'x = 0.4','text-anchor="middle"')+T(tx+34,(O.y+ty)/2,'y = 0.3')}
+if(s.ghost)g+=arm(ob,'var(--t1)','var(--t2)',.18);
+if(s.arm||s.armFaint)g+=arm(b,'var(--t1)','var(--t2)',s.armFaint?.25:1);
+const e=P(b.t1,L1*S),eo={x:e[0],y:e[1]};
+if(s.tri){g+=`<line x1="${O.x}" y1="${O.y}" x2="${tx}" y2="${ty}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="5 4"/>`;
+g+=lab(O,.22*S,b.t1+(b.s2>0?-.13:.2),'0.4','var(--t1)',700);
+const m=P(b.t1+b.t2,.15*S,eo);const[mx,my]=P(b.t1+b.t2+(b.s2>0?-1:1)*Math.PI/2,16,{x:m[0],y:m[1]});g+=`<text x="${mx}" y="${my}" fill="var(--t2)" font-size="16" font-weight="700" text-anchor="middle" dominant-baseline="central">0.3</text>`;
+g+=lab(O,.25*S,b.phi+(b.s2>0?.14:-.14),'0.5','var(--ink)',700);
+const u=b.t1,v=b.t1+b.t2+Math.PI;const k=14;const p1=P(u+Math.PI,k,eo),p2=P(b.t1+b.t2,k,eo);const c=[p1[0]+p2[0]-e[0],p1[1]+p2[1]-e[1]];g+=`<path d="M${p1[0]} ${p1[1]} L${c[0]} ${c[1]} L${p2[0]} ${p2[1]}" fill="none" stroke="var(--ink)" stroke-width="1.2"/>`}
+if(s.t2){const x=P(b.t1,58,eo);g+=`<line x1="${e[0]}" y1="${e[1]}" x2="${x[0]}" y2="${x[1]}" stroke="var(--mute)" stroke-width="1.4" stroke-dasharray="4 4"/>`+arc(eo,30,b.t1,b.t1+b.t2,'var(--t2)',2.5)+lab(eo,46,b.t1+b.t2/2,'θ₂','var(--t2)')}
+if(s.phi)g+=arc(O,50,0,b.phi,'var(--phi)',2.5)+lab(O,66,b.phi/2,'φ','var(--phi)');
+if(s.t1){if(Math.abs(b.t1)>1e-3){const mid=b.t1>b.phi?(b.t1+b.phi)/2:b.t1/2;g+=arc(O,86,0,b.t1,'var(--t1)',2.5)+lab(O,100,mid,'θ₁','var(--t1)')}else g+=T(O.x+70,O.y+20,'θ₁ = 0','fill="var(--t1)" font-weight="800" font-size="15"')}
+if(s.beta){g+=arc(O,126,b.t1,b.phi,'var(--beta)',2.5)+lab(O,142,(b.t1+b.phi)/2,'β','var(--beta)')}
+if(s.wrong){const wx=L1*Math.cos(b.t1)+L2*Math.cos(b.t2),wy=L1*Math.sin(b.t1)+L2*Math.sin(b.t2);if(Math.abs(wx-.4)>1e-3||Math.abs(wy-.3)>1e-3){const[a,c]=M(wx,wy);g+=`<circle cx="${a}" cy="${c}" r="7" fill="var(--bad)"/>`+T(a+12,c+5,'yanlış formül','fill="var(--bad)" font-weight="800"')}}
+g+=`<circle cx="${O.x}" cy="${O.y}" r="6" fill="var(--card)" stroke="var(--ink)" stroke-width="2"/>`+T(O.x,O.y+20,'Taban','text-anchor="middle"');
+g+=`<circle cx="${tx}" cy="${ty}" r="7" fill="${s.check?'var(--ok)':'var(--ink)'}"/>`+T(tx+12,ty-10,'Hedef (0.4, 0.3)','font-weight="600"');
+if(s.arm&&!s.tri){const[dx,dy]=P(b.t1+(b.s2>0?-.5:.6)+Math.PI*.5,18,eo);g+=T(dx,dy,'Dirsek','text-anchor="middle" fill="var(--mute)"')}
+svg.innerHTML=g}
+
+function render(){
+card.innerHTML=steps[st].h(B(br));
+[...stepsEl.children].forEach((x,i)=>{x.classList.toggle('on',i===st);x.setAttribute('aria-selected',i===st)});
+document.getElementById('br1').classList.toggle('on',br===1);document.getElementById('br2').classList.toggle('on',br===-1);
+document.getElementById('branches').style.visibility=steps[st].show.dmode?'hidden':'visible';
+document.getElementById('prev').disabled=false;document.getElementById('next').textContent=st===steps.length-1?'Başa dön ↺':'Sonraki →';
+stepsEl.children[st].scrollIntoView({block:'nearest',inline:'nearest'});
+draw()}
+stepsEl.addEventListener('click',e=>{const t=e.target.closest('button');if(t){st=+t.dataset.i;render()}});
+document.getElementById('br1').onclick=()=>{br=1;render()};
+document.getElementById('br2').onclick=()=>{br=-1;render()};
+document.getElementById('prev').onclick=()=>{st=(st-1+steps.length)%steps.length;render()};
+document.getElementById('next').onclick=()=>{st=(st+1)%steps.length;render()};
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')document.getElementById('next').click();if(e.key==='ArrowLeft')document.getElementById('prev').click()});
+render();
+}
+</script>
+</body>
+</html>

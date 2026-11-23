@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>2R kol 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: sakin ders aracı; elle çevrilen bir maket
+   IDEA: masanın üstünde duran robot kol maketi, açılar masaya çizilmiş yaylar
+   PICTURE: büyük 3D sahne, kol bağlantıları gerçek silindir, öbür çözüm silik hayalet
+   COLOUR and TYPE: masa açık gri-yeşil, θ1 mavi, θ2 mor, φ magenta, β kahve; Overpass
+   LAYOUT: sahne, kamera düğmeleri, mod, kontroller, açı düğmeleri, hesap kartı */
+:root{color-scheme:light dark;--bg:light-dark(#f4f6ef,#0d1c24);--ink:light-dark(#13242e,#e8eef0);--mute:light-dark(#5a6a72,#9fb0b8);--line:light-dark(#d5dacb,#26414f);--card:light-dark(#ffffff,#122833);
+--t1:light-dark(#1f6f9f,#6cc0f0);--t2:light-dark(#6b4fbf,#b39cff);--phi:light-dark(#d6127e,#ff5fb0);--beta:light-dark(#a8551b,#e59a5c);--bad:light-dark(#c0262d,#ff7a7f);--ok:light-dark(#11803f,#5fd38d)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Overpass,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:820px;margin:0 auto;padding:clamp(16px,4vw,36px) max(4vw,12px) 48px}
+h1{font-size:clamp(26px,6vw,38px);line-height:1.08;font-weight:800;margin:0 0 6px;text-wrap:balance}
+.lead{color:var(--mute);margin:0 0 14px}
+.view{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(light-dark(#eaf3f6,#173340),light-dark(#cddbe2,#0a1820))}
+#cv{display:block;width:100%;touch-action:none;cursor:grab}
+#cv:active{cursor:grabbing}
+.cam{position:absolute;top:8px;left:8px;display:flex;gap:6px}
+.lab{position:absolute;transform:translate(-50%,-50%);font:700 15px/1 Overpass,sans-serif;pointer-events:none;white-space:nowrap;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 6px var(--bg)}
+.lab.base,.lab.elb,.lab.x,.lab.y{color:var(--ink);font-weight:600;font-size:13px}
+.lab.tgt{color:var(--bad);font-weight:800}.lab.t1{color:var(--t1)}.lab.t2{color:var(--t2)}.lab.phi{color:var(--phi)}.lab.beta{color:var(--beta)}
+button{font:inherit;font-size:15px;min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--t1);outline-offset:2px}
+button.on{border-color:var(--ink);background:var(--ink);color:var(--bg)}
+.cam button{min-height:38px;padding:4px 11px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.row>button{flex:1 1 140px}
+label.sl{display:flex;align-items:center;gap:10px;margin:8px 0}
+label.sl span{width:2.4em;font-weight:800}
+label.sl input{flex:1;height:32px;accent-color:var(--t1)}
+label.sl output{width:5.4em;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.chips button{min-width:56px;font-weight:800;border-width:2px}
+.chips button.t1{border-color:var(--t1);color:var(--t1)}.chips button.t2{border-color:var(--t2);color:var(--t2)}.chips button.phi{border-color:var(--phi);color:var(--phi)}.chips button.beta{border-color:var(--beta);color:var(--beta)}
+.chips button[aria-pressed=true].t1{background:var(--t1);color:var(--bg)}.chips button[aria-pressed=true].t2{background:var(--t2);color:var(--bg)}.chips button[aria-pressed=true].phi{background:var(--phi);color:var(--bg)}.chips button[aria-pressed=true].beta{background:var(--beta);color:var(--bg)}
+.small{font-size:14px;color:var(--mute);margin:8px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px clamp(12px,3vw,20px);margin-top:12px;line-height:1.95}
+.card div{overflow-x:auto;white-space:nowrap}
+.card b{font-weight:800}
+.t1c{color:var(--t1)}.t2c{color:var(--t2)}.phic{color:var(--phi)}.betac{color:var(--beta)}.bad{color:var(--bad)}.ok{color:var(--ok)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>2R robot kol, 3 boyutlu</h1>
+<p class="lead">Kol masanın üstünde duruyor. Boş yeri sürükleyerek sahneyi çevir. Kırmızı hedefi sürükleyerek taşı. Silik kol öbür çözüm.</p>
+
+<div class="view" id="view">
+<canvas id="cv"></canvas>
+<div id="labs"></div>
+<div class="cam" id="cam"><button data-c="3d" class="on">3D</button><button data-c="top">Üstten</button><button data-c="side">Yandan</button></div>
+</div>
+
+<div class="row" id="modes"><button id="mT" class="on">Hedef ver (ters kinematik)</button><button id="mI">Açı ver (ileri kinematik)</button></div>
+
+<div id="cT">
+<label class="sl"><span>x</span><input type="range" id="sx" min="-0.85" max="0.85" step="0.01" value="0.4"><output id="ox"></output></label>
+<label class="sl"><span>y</span><input type="range" id="sy" min="-0.85" max="0.85" step="0.01" value="0.3"><output id="oy"></output></label>
+<div class="row"><button id="b1" class="on">1. dal: θ₂ pozitif</button><button id="b2">2. dal: θ₂ negatif</button></div>
+<div class="row"><button id="pc">c şıkkı: (0.4, 0.3)</button><button id="pd">d şıkkı: (0.8, 0)</button></div>
+</div>
+<div id="cI" hidden>
+<label class="sl"><span>θ₁</span><input type="range" id="s1" min="-180" max="180" step="0.5" value="0"><output id="o1"></output></label>
+<label class="sl"><span>θ₂</span><input type="range" id="s2" min="-180" max="180" step="0.5" value="90"><output id="o2"></output></label>
+</div>
+
+<div class="small">Sahnede göster:</div>
+<div class="row chips" id="chips">
+<button class="t1" data-k="t1" aria-pressed="true">θ₁</button><button class="t2" data-k="t2" aria-pressed="true">θ₂</button><button class="phi" data-k="phi" aria-pressed="true">φ</button><button class="beta" data-k="beta" aria-pressed="true">β</button>
+</div>
+<p class="small">θ₁: x ekseni ile 1. kol. θ₂: 1. kolun uzantısı (gri kesikli) ile 2. kol. φ: x ekseni ile tabandan hedefe çizgi (magenta kesikli). β: 1. kol ile bu çizgi arası.</p>
+
+<div class="card" id="out" aria-live="polite"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script>
+function main(){
+const L1=.4,L2=.3,d=Math.PI/180,TAU=Math.PI*2;
+const $=i=>document.getElementById(i);
+const fm=(v,n=2)=>(Math.abs(v)<5*10**-(n+1)?0:v).toFixed(n).replace('-','−');
+const wrap=a=>{while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a};
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches};
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const st={mode:'ters',x:.4,y:.3,br:1,a1:0,a2:90,show:{t1:1,t2:1,phi:1,beta:1}};
+const cur={t1:0,t2:90*d};
+const cam={az:-.5,el:.85,zoom:1},camT={az:-.5,el:.85};
+
+function ik(x,y,br){const r2=x*x+y*y,r=Math.sqrt(r2);const raw=(r2-L1*L1-L2*L2)/(2*L1*L2);const ok=Math.abs(raw)<=1+1e-9;const c2=Math.max(-1,Math.min(1,raw));const s2=br*Math.sqrt(1-c2*c2);const t2=Math.atan2(s2,c2),phi=Math.atan2(y,x),beta=Math.atan2(L2*s2,L1+L2*c2);return{ok,r,raw,c2,s2,t2,phi,beta,t1:phi-beta}}
+const fk=(a,b)=>[L1*Math.cos(a)+L2*Math.cos(a+b),L1*Math.sin(a)+L2*Math.sin(a+b)];
+
+const cv=$('cv'),view=$('view'),labs=$('labs');
+const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+const scene=new THREE.Scene();
+const FOV=36,camera=new THREE.PerspectiveCamera(FOV,1,.05,30);
+scene.add(new THREE.AmbientLight(0xffffff,.78));
+const sun=new THREE.DirectionalLight(0xffffff,.8);sun.position.set(1,2.2,1.2);scene.add(sun);
+const plane=new THREE.Group();plane.rotation.x=-Math.PI/2;scene.add(plane);
+
+const tableM=new THREE.MeshStandardMaterial({roughness:.9});
+const table=new THREE.Mesh(new THREE.CircleGeometry(.95,72),tableM);table.position.z=-.002;plane.add(table);
+let grid=null;
+function theme(){const dk=isDark();tableM.color.set(dk?0x1d3441:0xe6eee4);if(grid){plane.remove(grid);grid.geometry.dispose()}grid=new THREE.GridHelper(1.8,18,dk?0x4f7384:0x9fb2a2,dk?0x2c4856:0xcad6c8);grid.rotation.x=Math.PI/2;grid.position.z=.0005;plane.add(grid)}
+theme();matchMedia('(prefers-color-scheme: dark)').addEventListener('change',theme);
+
+const ws=new THREE.Mesh(new THREE.RingGeometry(.1,.7,96),new THREE.MeshBasicMaterial({color:0x1D9E75,transparent:true,opacity:.17,side:THREE.DoubleSide,depthWrite:false}));ws.position.z=.001;plane.add(ws);
+const circ=r=>{const p=[];for(let i=0;i<=96;i++){const a=i/96*TAU;p.push(new THREE.Vector3(r*Math.cos(a),r*Math.sin(a),.002))}plane.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x1D9E75})))};circ(.7);circ(.1);
+const axis=(x,y)=>plane.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,.003),new THREE.Vector3(x,y,.003)]),new THREE.LineBasicMaterial({color:0x888888})));axis(.88,0);axis(0,.88);
+
+function makeArm(op,withBase){
+ const mk=c=>new THREE.MeshStandardMaterial({color:c,roughness:.4,metalness:.15,transparent:op<1,opacity:op,depthWrite:op>=1});
+ const mats=[mk(0x2a7fb8),mk(0x7a5fd0)],jm=new THREE.MeshStandardMaterial({color:0x3a4650,roughness:.5,metalness:.3,transparent:op<1,opacity:op,depthWrite:op>=1});
+ const root=new THREE.Group();plane.add(root);
+ const cyl=(r,h,m)=>new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28),m);
+ if(withBase){const b=cyl(.065,.06,jm);b.rotation.x=Math.PI/2;b.position.z=.03;root.add(b)}
+ const p1=new THREE.Group();p1.position.z=.06;root.add(p1);
+ const sh=cyl(.04,.05,jm);sh.rotation.x=Math.PI/2;p1.add(sh);
+ const l1=cyl(.026,L1,mats[0]);l1.rotation.z=Math.PI/2;l1.position.x=L1/2;p1.add(l1);
+ const e=new THREE.Group();e.position.x=L1;p1.add(e);
+ const ej=cyl(.036,.08,jm);ej.rotation.x=Math.PI/2;ej.position.z=.03;e.add(ej);
+ const p2=new THREE.Group();p2.position.z=.06;e.add(p2);
+ const l2=cyl(.022,L2,mats[1]);l2.rotation.z=Math.PI/2;l2.position.x=L2/2;p2.add(l2);
+ const tip=new THREE.Mesh(new THREE.SphereGeometry(.03,24,16),jm);tip.position.x=L2;p2.add(tip);
+ return{root,e,mats,set(a,b){p1.rotation.z=a;p2.rotation.z=b}}}
+const main=makeArm(1,true),ghost=makeArm(.2,false);
+
+const ext=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,.06),new THREE.Vector3(.2,0,.06)]),new THREE.LineDashedMaterial({color:0x8a8f93,dashSize:.02,gapSize:.015}));ext.computeLineDistances();main.e.add(ext);
+
+const tgt=new THREE.Group();plane.add(tgt);
+const red=new THREE.MeshBasicMaterial({color:0xe03131});
+const tr=new THREE.Mesh(new THREE.RingGeometry(.03,.046,32),red);tr.position.z=.003;tgt.add(tr);
+const pin=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.12,10),red);pin.rotation.x=Math.PI/2;pin.position.z=.06;tgt.add(pin);
+const ball=new THREE.Mesh(new THREE.SphereGeometry(.02,18,12),red);ball.position.z=.12;tgt.add(ball);
+const hitM=new THREE.Mesh(new THREE.SphereGeometry(.06,10,8),new THREE.MeshBasicMaterial({visible:false}));hitM.position.z=.12;tgt.add(hitM);
+
+const phiG=new THREE.BufferGeometry();phiG.setAttribute('position',new THREE.BufferAttribute(new Float32Array(6),3));
+const phiL=new THREE.Line(phiG,new THREE.LineDashedMaterial({color:0xd6127e,dashSize:.03,gapSize:.02}));phiL.frustumCulled=false;plane.add(phiL);
+function setPhi(x,y){phiG.attributes.position.array.set([0,0,.004,x,y,.004]);phiG.attributes.position.needsUpdate=true;phiL.computeLineDistances()}
+
+function ringMesh(col,ri,ro,z,parent){
+ const m=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshBasicMaterial({color:col,side:THREE.DoubleSide}));m.position.z=z;parent.add(m);let key='';
+ return{m,set(a0,a1,on){const s=Math.min(a0,a1),l=Math.abs(a1-a0);if(!on||l<.002){m.visible=false;return false}m.visible=true;const k=s.toFixed(3)+'|'+l.toFixed(3);if(k!==key){key=k;m.geometry.dispose();m.geometry=new THREE.RingGeometry(ri,ro,Math.max(4,Math.ceil(l/.05)),1,s,l)}return true}}}
+const rT1=ringMesh(0x2f86c0,.10,.122,.005,plane),rPhi=ringMesh(0xd6127e,.17,.192,.006,plane),rBeta=ringMesh(0xc8661f,.24,.262,.007,plane),rT2=ringMesh(0x8068e0,.08,.102,.06,main.e);
+
+const names={base:'Taban',elb:'Dirsek',tgt:'Hedef',t1:'θ₁',t2:'θ₂',phi:'φ',beta:'β',x:'x',y:'y'},LE={};
+for(const k in names){const s=document.createElement('span');s.className='lab '+k;s.textContent=names[k];labs.appendChild(s);LE[k]=s}
+const tmp=new THREE.Vector3();let W=1,H=1;
+function put(k,obj,x,y,z,on=true){const el=LE[k];if(!on){el.style.display='none';return}tmp.set(x,y,z);obj.localToWorld(tmp);tmp.project(camera);if(tmp.z>1){el.style.display='none';return}el.style.display='block';el.style.left=((tmp.x+1)/2*W)+'px';el.style.top=((1-tmp.y)/2*H)+'px'}
+
+let badState=null;
+function paint(bad){if(badState===bad)return;badState=bad;main.mats[0].color.set(bad?0xc0262d:0x2a7fb8);main.mats[1].color.set(bad?0xe0585e:0x7a5fd0)}
+
+function fit(){W=view.clientWidth||320;H=Math.round(W*(W<560?1.02:.66));renderer.setSize(W,H,false);cv.style.height=H+'px';camera.aspect=W/H;camera.updateProjectionMatrix()}
+new ResizeObserver(fit).observe(view);fit();
+
+const ctr=new THREE.Vector3(.12,.02,-.12);
+function placeCam(){const asp=W/H,base=.9/(Math.tan(FOV*d/2)*Math.min(asp,1)),R=base*cam.zoom;camera.position.set(ctr.x+R*Math.sin(cam.az)*Math.cos(cam.el),ctr.y+R*Math.sin(cam.el),ctr.z+R*Math.cos(cam.az)*Math.cos(cam.el));camera.lookAt(ctr)}
+
+function frame(){
+ const sol=ik(st.x,st.y,st.br),oth=ik(st.x,st.y,-st.br),ters=st.mode==='ters';
+ let d1,d2;if(ters){d1=sol.t1;d2=sol.t2}else{d1=st.a1*d;d2=st.a2*d}
+ const k=reduce?1:.2;cur.t1+=wrap(d1-cur.t1)*k;cur.t2+=(d2-cur.t2)*k;
+ main.set(cur.t1,cur.t2);paint(ters&&!sol.ok);
+ ghost.root.visible=ters&&sol.ok;if(ghost.root.visible)ghost.set(oth.t1,oth.t2);
+ const tip=fk(cur.t1,cur.t2),T=ters?[st.x,st.y]:tip;
+ tgt.position.set(T[0],T[1],0);setPhi(T[0],T[1]);
+ const phi=Math.atan2(T[1],T[0]);
+ const o1=rT1.set(0,cur.t1,st.show.t1),o2=rT2.set(0,cur.t2,st.show.t2),o3=rPhi.set(0,phi,st.show.phi),o4=rBeta.set(cur.t1,phi,st.show.beta);
+ if(!reduce){cam.az+=(camT.az-cam.az)*.15;cam.el+=(camT.el-cam.el)*.15}else{cam.az=camT.az;cam.el=camT.el}
+ placeCam();renderer.render(scene,camera);
+ put('base',plane,0,-.1,0);put('elb',main.e,0,0,.17);put('tgt',plane,T[0],T[1],.17);put('x',plane,.93,0,0);put('y',plane,0,.93,0);
+ const m1=cur.t1/2,mp=phi/2,mb=(cur.t1+phi)/2,m2=cur.t2/2;
+ put('t1',plane,.155*Math.cos(m1),.155*Math.sin(m1),.01,o1);
+ put('phi',plane,.225*Math.cos(mp),.225*Math.sin(mp),.01,o3);
+ put('beta',plane,.295*Math.cos(mb),.295*Math.sin(mb),.01,o4);
+ put('t2',main.e,.14*Math.cos(m2),.14*Math.sin(m2),.06,o2);
+ requestAnimationFrame(frame)}
+
+function readout(){
+ const sol=ik(st.x,st.y,st.br);let h='';
+ if(st.mode==='ters'){
+  h+=`<div>r = √(${fm(st.x)}² + ${fm(st.y)}²) = <b>${fm(sol.r,3)} m</b></div>`;
+  h+=`<div>c₂ = (r² − L₁² − L₂²) / (2L₁L₂) = <b>${fm(sol.raw,3)}</b></div>`;
+  if(!sol.ok)h+=`<div class="bad"><b>|c₂| > 1: ulaşılamaz.</b> ${sol.r>.7?'Hedef 0.7 m dış sınırın ötesinde.':'Hedef 0.1 m iç sınırın içinde.'}</div>`;
+  else{
+   h+=`<div class="t2c">s₂ = ${st.br>0?'+':'−'}√(1 − c₂²) = ${fm(sol.s2,3)} → θ₂ = atan2(s₂, c₂) = <b>${fm(sol.t2/d)}°</b></div>`;
+   h+=`<div class="phic">φ = atan2(y, x) = <b>${fm(sol.phi/d)}°</b></div>`;
+   h+=`<div class="betac">β = atan2(L₂s₂, L₁ + L₂c₂) = <b>${fm(sol.beta/d)}°</b></div>`;
+   h+=`<div class="t1c">θ₁ = φ − β = ${fm(sol.phi/d)}° − (${fm(sol.beta/d)}°) = <b>${fm(sol.t1/d)}°</b></div>`;
+   const p=fk(sol.t1,sol.t2);h+=`<div class="ok">Kontrol: ileri kinematikle uç nokta = (<b>${fm(p[0],3)}</b>, <b>${fm(p[1],3)}</b>)</div>`}
+ }else{
+  const a=st.a1*d,b=st.a2*d,p=fk(a,b),phi=Math.atan2(p[1],p[0]);
+  h+=`<div class="t1c">θ₁ = <b>${fm(st.a1,1)}°</b></div><div class="t2c">θ₂ = <b>${fm(st.a2,1)}°</b></div>`;
+  h+=`<div>2. kolun yere göre açısı: θ₁ + θ₂ = <b>${fm(st.a1+st.a2,1)}°</b></div>`;
+  h+=`<div>x = L₁cos θ₁ + L₂cos(θ₁+θ₂) = <b>${fm(p[0],3)}</b></div><div>y = L₁sin θ₁ + L₂sin(θ₁+θ₂) = <b>${fm(p[1],3)}</b></div>`;
+  h+=`<div class="phic">φ = atan2(y, x) = <b>${fm(phi/d,1)}°</b></div><div class="betac">β = φ − θ₁ = <b>${fm(phi/d-st.a1,1)}°</b></div>`}
+ $('out').innerHTML=h;
+ $('ox').textContent=fm(st.x)+' m';$('oy').textContent=fm(st.y)+' m';$('o1').textContent=fm(st.a1,1)+'°';$('o2').textContent=fm(st.a2,1)+'°'}
+
+const sync=()=>{$('sx').value=st.x;$('sy').value=st.y;$('s1').value=st.a1;$('s2').value=st.a2;readout()};
+$('sx').oninput=e=>{st.x=+e.target.value;readout()};
+$('sy').oninput=e=>{st.y=+e.target.value;readout()};
+$('s1').oninput=e=>{st.a1=+e.target.value;readout()};
+$('s2').oninput=e=>{st.a2=+e.target.value;readout()};
+const setBr=b=>{st.br=b;$('b1').classList.toggle('on',b>0);$('b2').classList.toggle('on',b<0);readout()};
+$('b1').onclick=()=>setBr(1);$('b2').onclick=()=>setBr(-1);
+$('pc').onclick=()=>{st.x=.4;st.y=.3;sync()};$('pd').onclick=()=>{st.x=.8;st.y=0;sync()};
+function setMode(m){if(m==='ileri'&&st.mode==='ters'){st.a1=Math.round(wrap(cur.t1)/d*2)/2;st.a2=Math.round(wrap(cur.t2)/d*2)/2}st.mode=m;$('mT').classList.toggle('on',m==='ters');$('mI').classList.toggle('on',m==='ileri');$('cT').hidden=m!=='ters';$('cI').hidden=m!=='ileri';sync()}
+$('mT').onclick=()=>setMode('ters');$('mI').onclick=()=>setMode('ileri');
+$('chips').onclick=e=>{const b=e.target.closest('button');if(!b)return;const k=b.dataset.k;st.show[k]=st.show[k]?0:1;b.setAttribute('aria-pressed',!!st.show[k])};
+$('cam').onclick=e=>{const b=e.target.closest('button');if(!b)return;const c=b.dataset.c;const v={'3d':[-.5,.85],top:[0,1.5],side:[-.1,.18]}[c];camT.az=v[0];camT.el=v[1];[...$('cam').children].forEach(x=>x.classList.toggle('on',x===b))};
+
+const ray=new THREE.Raycaster(),pl=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3(),nd=new THREE.Vector2();
+function aim(e){const r=cv.getBoundingClientRect();nd.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height*2-1));ray.setFromCamera(nd,camera)}
+let drag=null,lx=0,ly=0;
+cv.addEventListener('pointerdown',e=>{aim(e);lx=e.clientX;ly=e.clientY;drag='orbit';if(st.mode==='ters'){const h=ray.intersectObject(hitM);let near=h.length>0;if(!near&&ray.ray.intersectPlane(pl,hit))near=Math.hypot(hit.x-st.x,-hit.z-st.y)<.07;if(near)drag='tgt'}cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointermove',e=>{if(!drag)return;if(drag==='orbit'){cam.az-=(e.clientX-lx)*.008;cam.el=Math.max(.15,Math.min(1.5,cam.el+(e.clientY-ly)*.008));camT.az=cam.az;camT.el=cam.el;lx=e.clientX;ly=e.clientY;[...$('cam').children].forEach(x=>x.classList.remove('on'))}else{aim(e);if(ray.ray.intersectPlane(pl,hit)){let x=hit.x,y=-hit.z;const r=Math.hypot(x,y);if(r>.85){x*=.85/r;y*=.85/r}st.x=Math.round(x*100)/100;st.y=Math.round(y*100)/100;sync()}}});
+const end=()=>{drag=null};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.zoom=Math.max(.45,Math.min(1.5,cam.zoom*(1+e.deltaY*.001)))},{passive:false});
+
+sync();frame();
+}
+if(window.THREE)main();else document.getElementById('view').insertAdjacentHTML('beforeend','<p style="padding:24px">3D kütüphanesi yüklenemedi. Sayfayı yenile.</p>');
+</script>
+</body>
+</html>
